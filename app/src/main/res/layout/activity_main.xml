@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="30sp"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <!-- Line chart component -->
+    <com.github.mikephil.charting.charts.LineChart
+        android:layout_width="match_parent"
+        android:layout_height="450sp"
+        android:id="@+id/accXYZChart" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/zValue"
+        android:layout_marginTop="5sp"
+        android:layout_below="@+id/accXYZChart" />
+
+    <EditText
+        android:id="@+id/ip"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:layout_below="@+id/zValue"
+        android:layout_marginTop="5dp"
+        android:text="192.168.0.110"/>
+
+    <EditText
+        android:id="@+id/port"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:layout_below="@+id/zValue"
+        android:layout_marginStart="4dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginTop="5dp"
+        android:layout_toEndOf="@+id/ip"
+        android:layout_toRightOf="@+id/ip"
+        android:text="7777"/>
+
+    <TextView
+        android:id="@+id/status"
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:layout_below="@+id/ip"
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="5dp"
+        android:text="Status: " />
+
+    <Button
+        android:id="@+id/connectButton"
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        android:layout_below="@+id/status"
+        android:layout_marginTop="5dp"
+        android:text="Connect" />
+
+    <Button
+        android:id="@+id/disconnectButton"
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        android:layout_below="@+id/status"
+        android:layout_marginTop="5dp"
+        android:layout_toEndOf="@+id/connectButton"
+        android:layout_toRightOf="@+id/connectButton"
+        android:text="Disconnect" />
+
+
+</RelativeLayout>
