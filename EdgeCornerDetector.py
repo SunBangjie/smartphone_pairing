@@ -5,11 +5,32 @@ from os import listdir
 from os.path import isfile, join
 
 
-IMAGE_THRESHOLD_LOWER_BOUND = 75
+IMAGE_THRESHOLD_LOWER_BOUND = 60
 
 SHAPE_SCORE = 100
 AREA_SCORE = 1.25
 ARC_SCORE = 0.75
+
+FACTOR = 2
+RESO_X = int(544 / FACTOR)
+RESO_Y = int(960 / FACTOR)
+
+
+def create_windows():
+    cv.namedWindow("Original Image", cv.WINDOW_NORMAL)
+    cv.namedWindow("Pre-processed Image", cv.WINDOW_NORMAL)
+    cv.namedWindow("Edges", cv.WINDOW_NORMAL)
+    cv.namedWindow("Selected Contour", cv.WINDOW_NORMAL)
+    cv.namedWindow("Fitted Rectangle", cv.WINDOW_NORMAL)
+    cv.namedWindow("Extreme Points", cv.WINDOW_NORMAL)
+    cv.namedWindow("Turning Points", cv.WINDOW_NORMAL)
+    cv.resizeWindow("Original Image", RESO_X, RESO_Y)
+    cv.resizeWindow("Pre-processed Image", RESO_X, RESO_Y)
+    cv.resizeWindow("Edges", RESO_X, RESO_Y)
+    cv.resizeWindow("Selected Contour", RESO_X, RESO_Y)
+    cv.resizeWindow("Fitted Rectangle", RESO_X * 2, RESO_Y * 2)
+    cv.resizeWindow("Extreme Points", RESO_X, RESO_Y)
+    cv.resizeWindow("Turning Points", RESO_X, RESO_Y)
 
 
 def get_angle(P1, P2, P3):
@@ -121,20 +142,14 @@ def detect(folder):
     depth_files = [f for f in listdir(folder) if isfile(join(folder, f))]
     depth_files = sorted(depth_files, key=get_file_index)
 
-    cv.namedWindow("Original Depth Image", cv.WINDOW_AUTOSIZE)
-    cv.namedWindow("Pre-processed Image", cv.WINDOW_AUTOSIZE)
-    cv.namedWindow("Edges", cv.WINDOW_AUTOSIZE)
-    # cv.namedWindow("Corners", cv.WINDOW_AUTOSIZE)
-    cv.namedWindow("Selected Contour", cv.WINDOW_AUTOSIZE)
-    cv.namedWindow("Fitted Rectangle", cv.WINDOW_AUTOSIZE)
-    cv.namedWindow("Extreme Points", cv.WINDOW_AUTOSIZE)
-    cv.namedWindow("Turning Points", cv.WINDOW_AUTOSIZE)
+    # create windows for display
+    create_windows()
 
     for depth_image in depth_files:
         # Read depth images
         img = cv.imread(folder + "/" + depth_image, 0)
-        img = cv.rotate(img, rotateCode=cv.ROTATE_90_CLOCKWISE)
-        cv.imshow("Original Depth Image", img)
+        # img = cv.rotate(img, rotateCode=cv.ROTATE_90_CLOCKWISE)
+        cv.imshow("Original Image", img)
 
         # Pre-process image by blurring
         processed_img = pre_process(img)
@@ -177,4 +192,4 @@ def detect(folder):
 
 
 if __name__ == "__main__":
-    detect("./depth_frames")
+    detect("./rgb_frames/")

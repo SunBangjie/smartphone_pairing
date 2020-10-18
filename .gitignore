@@ -15,3 +15,7 @@
 .idea/
 .settings/
 .project
+*.weights
+depth_frames/
+rgb_frames/
+*.mp4

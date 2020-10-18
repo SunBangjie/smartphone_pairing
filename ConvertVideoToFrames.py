@@ -1,13 +1,13 @@
 import cv2
 
 # Opens the Video file
-cap = cv2.VideoCapture("Depth_Video.mp4")
+cap = cv2.VideoCapture("phone.mp4")
 i = 0
 while(cap.isOpened()):
     ret, frame = cap.read()
     if ret == False:
         break
-    cv2.imwrite('./depth_frames/depth_'+str(i)+'.jpg', frame)
+    cv2.imwrite('./rgb_frames/rgb_'+str(i)+'.jpg', frame)
     i += 1
 
 cap.release()
