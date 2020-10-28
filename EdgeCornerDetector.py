@@ -5,15 +5,15 @@ from os import listdir
 from os.path import isfile, join
 
 
-IMAGE_THRESHOLD_LOWER_BOUND = 60
+IMAGE_THRESHOLD_LOWER_BOUND = 127
 
-SHAPE_SCORE = 100
-AREA_SCORE = 1.25
-ARC_SCORE = 0.75
+SHAPE_SCORE = 500
+AREA_SCORE = 1
+ARC_SCORE = 0.5
 
 FACTOR = 2
-RESO_X = int(544 / FACTOR)
-RESO_Y = int(960 / FACTOR)
+RESO_X = int(576 / FACTOR)
+RESO_Y = int(640 / FACTOR)
 
 
 def create_windows():
@@ -47,8 +47,7 @@ def get_angle(P1, P2, P3):
 
 
 def get_file_index(filename):
-    name = filename.split('.')[0]
-    index = int(name.split('_')[1])
+    index = int(filename.split('.')[0])
     return index
 
 
@@ -79,13 +78,15 @@ def detect_edges(img):
     return edges
 
 
-def detect_contours(img, select_index):
+def detect_contours(img):
     ret, thresh = cv.threshold(img, 127, 255, 0)
     im2, contours, hierarchy = cv.findContours(
         thresh, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+    if len(contours) < 0:
+        raise Exception
     # sort contours from smallest area to largest
     sorted_contours = sorted(contours, key=get_contour_score)
-    largest_contour = sorted_contours[-select_index]
+    largest_contour = sorted_contours[-1]
     # generate fitted box
     fitted_rect = cv.minAreaRect(largest_contour)
     fitted_box = cv.boxPoints(fitted_rect)
@@ -139,15 +140,15 @@ def detect_corners(img):
 
 
 def detect(folder):
-    depth_files = [f for f in listdir(folder) if isfile(join(folder, f))]
-    depth_files = sorted(depth_files, key=get_file_index)
+    img_files = [f for f in listdir(folder) if isfile(join(folder, f))]
+    img_files = sorted(img_files, key=get_file_index)
 
     # create windows for display
     create_windows()
 
-    for depth_image in depth_files:
+    for img_file in img_files:
         # Read depth images
-        img = cv.imread(folder + "/" + depth_image, 0)
+        img = cv.imread(folder + "/" + img_file, 0)
         # img = cv.rotate(img, rotateCode=cv.ROTATE_90_CLOCKWISE)
         cv.imshow("Original Image", img)
 
@@ -167,8 +168,11 @@ def detect(folder):
         #cv.imshow("Corners", gray)
 
         # Detect contours and fit into shapes
-        contour, box, centroid, extreme_points, turning_points = detect_contours(
-            edges, 1)
+        try:
+            contour, box, centroid, extreme_points, turning_points = detect_contours(
+                edges)
+        except:
+            continue
         contour_img = np.copy(img)
         cv.drawContours(contour_img, [contour], 0, 255, 2)
         cv.imshow("Selected Contour", contour_img)
@@ -192,4 +196,4 @@ def detect(folder):
 
 
 if __name__ == "__main__":
-    detect("./rgb_frames/")
+    detect("./depth_frames/")

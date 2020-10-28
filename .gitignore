@@ -19,3 +19,6 @@
 depth_frames/
 rgb_frames/
 *.mp4
+*.hdf5
+videos/
+output/
