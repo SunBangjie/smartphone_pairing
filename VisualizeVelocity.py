@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-
-f = open("output/velocities.txt", "r")
+experiment_name = "exp1"
+output_folder = "Experiment_Output/" + experiment_name + "/"
+f = open(output_folder + "velocities.txt", "r")
 
 T, X, Y, Z = [], [], [], []
 

@@ -1,7 +1,9 @@
 import numpy as np
 
-f = open("output/positions.txt", "r")
-out = open("output/velocities.txt", "w")
+experiment_name = "exp1"
+output_folder = "Experiment_Output/" + experiment_name + "/"
+f = open(output_folder + "positions.txt", "r")
+out = open(output_folder + "velocities.txt", "w")
 
 prev_time = None
 prev_pos = None

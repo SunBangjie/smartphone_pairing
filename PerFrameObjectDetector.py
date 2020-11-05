@@ -7,7 +7,7 @@ import time
 from scipy import stats
 import math
 
-DEBUG = False
+DEBUG = True
 
 FACTOR = 2
 RESO_X = int(576 / FACTOR)
@@ -36,8 +36,8 @@ def load_yolo(model_folder):
     # load the COCO class labels our YOLO model was trained on
     labelsPath = model_folder + "coco.names"
     LABELS = open(labelsPath).read().strip().split("\n")
-    weightsPath = model_folder + "yolov3.weights"
-    configPath = model_folder + "yolov3.cfg"
+    weightsPath = model_folder + "yolov3-spp.weights"
+    configPath = model_folder + "yolov3-spp.cfg"
     print("[INFO] loading YOLO from disk...")
     if DEBUG:
         print("label: {}\nweights: {}\nconfig: {}".format(
@@ -147,10 +147,10 @@ def main(rgb_folder, depth_folder, model_folder, output_folder, save_images=Fals
                 # display and save image
                 cv2.imshow("RGB", frame)
                 cv2.imwrite(output_folder +
-                            "/labelled_images/rgb/" + img_file, frame)
+                            "rgb/" + img_file, frame)
                 cv2.imshow("Depth", depth)
                 cv2.imwrite(output_folder +
-                            "/labelled_images/depth/" + img_file, depth)
+                            "depth/" + img_file, depth)
 
             # get centroid of the bouding box
             centroid_x = x + int(w / 2)
@@ -182,13 +182,14 @@ def main(rgb_folder, depth_folder, model_folder, output_folder, save_images=Fals
 
 
 if __name__ == "__main__":
-    rgb_folder = "rgb_frames/"
-    depth_folder = "depth_frames/"
+    experiment_name = "exp7"
+    rgb_folder = "Experiment_Frames/" + experiment_name + "/rgb_frames/"
+    depth_folder = "Experiment_Frames/" + experiment_name + "/depth_frames/"
     model_folder = "yolo-coco/"
-    output_folder = "output/"
+    output_folder = "Experiment_Output/" + experiment_name + "/"
     start = time.time()
     print("[INFO] start processing all frames...")
     main(rgb_folder, depth_folder, model_folder,
-         output_folder, save_images=False)
+         output_folder, save_images=True)
     elapse = time.time() - start
     print("[INFO] completed in {}s".format(round(elapse, 1)))

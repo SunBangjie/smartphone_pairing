@@ -22,3 +22,9 @@ rgb_frames/
 *.hdf5
 videos/
 output/
+exp_1/
+old_exp/
+Experiment_Data/
+Experiment_Frames/
+*depth/
+*rgb/
