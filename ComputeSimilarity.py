@@ -11,6 +11,35 @@ def sum_3d(a, b, m):
     return c
 
 
+def scale(a, m):
+    for i in [0,1,2]:
+        a[i] = a[i] * m
+    return a
+
+
+def scale_axis(d, m, axis):
+    result = {}
+    for key, value in d.items():
+        value[axis] = value[axis] * m
+        result[key] = value
+    return result
+
+
+def step(a):
+    a[0] = 1 if a[0] > 0 else 0
+    a[1] = 1 if a[1] > 0 else 0
+    a[2] = 1 if a[2] > 0 else 0
+    return a
+
+
+def step_3d(d):
+    values = np.array(list(d.values()))
+    result = {}
+    for key, value in d.items():
+        result[key] = step(value)
+    return result
+
+
 def maxabs(a, axis=None):
     """Return slice of a, keeping only those values that are furthest away
     from 0 along axis"""
@@ -37,6 +66,36 @@ def normalize_3d(d):
     result = {}
     for key, value in d.items():
         result[key] = [value[0]/max[0], value[1]/max[1], value[2]/max[2]]
+    return result
+
+
+def swap_axis(a, a1, a2):
+    temp = a[a1]
+    a[a1] = a[a2]
+    a[a2] = temp
+    return a
+
+
+def swap_axis_3d(d, a1, a2):
+    result = {}
+    for key, value in d.items():
+        result[key] = swap_axis(value, a1, a2)
+    return result
+
+
+def cap(a, m):
+    for i in [0,1,2]:
+        if a[i] > m:
+            a[i] = m
+        elif a[i] < -m:
+            a[i] = -m
+    return a
+
+
+def cap_3d(d, m):
+    result = {}
+    for key, value in d.items():
+        result[key] = cap(value, m)
     return result
 
 
@@ -102,15 +161,14 @@ def find_keys_in_range(keys, min, max):
 
 def get_similarity(a, b):
     same_sign = a * b > 0
-    small_diff = abs(abs(a) - abs(b)) < Threshold.DIFF_THRESHOLD
+    small_diff = abs(a - b) < Threshold.DIFF_THRESHOLD
     if same_sign and small_diff:
         return 1
     elif same_sign:
         return 0.9
     elif small_diff:
-        return 0.8
-    else:
-        return 0
+        return 0.5
+    return 0
 
 
 def get_similarity_3d(a, b):
@@ -126,11 +184,11 @@ def main(experiment_name, LOG=False):
     sender_acc_path = folder + "{}_acc_reading.txt".format(experiment_name)
     attacker_acc_path = folder + \
         "{}_attack_acc_reading.txt".format(experiment_name)
-    verifier_vel_path = folder + "velocities.txt"
+    verifier_acc_path = folder + "accelerations.txt"
 
     # load data
-    first_ts, last_ts = get_first_and_last_ts(verifier_vel_path)
-    verifier_vel = read_acc(verifier_vel_path, first_ts,
+    first_ts, last_ts = get_first_and_last_ts(verifier_acc_path)
+    verifier_acc = read_acc(verifier_acc_path, first_ts,
                             last_ts, is_sender=False)
     sender_acc = read_acc(sender_acc_path, first_ts, last_ts, is_sender=True)
     attacker_acc = read_acc(attacker_acc_path, first_ts,
@@ -138,16 +196,16 @@ def main(experiment_name, LOG=False):
 
     # log number of samples
     if LOG:
-        print("Verifier (Kinect) has {} samples".format(len(verifier_vel.keys())))
+        print("Verifier (Kinect) has {} samples".format(len(verifier_acc.keys())))
         print("Sender (Smartphone) has {} samples".format(len(sender_acc.keys())))
         print("Attacker (Malicious phone) has {} samples".format(
             len(attacker_acc.keys())))
 
     # visualize
-    # plot(verifier_vel, sender_acc, attacker_acc)
+    #plot(verifier_acc, sender_acc, attacker_acc)
 
     # since we always have more samples in sender/attacker, we want to sum the accelerations within the time interval to get the next velocity
-    verifier_ts = list(verifier_vel.keys())
+    verifier_ts = list(verifier_acc.keys())
     sender_vel = {}
     attacker_vel = {}
     for i in range(len(verifier_ts) - 1):
@@ -155,21 +213,33 @@ def main(experiment_name, LOG=False):
         max = verifier_ts[i+1]
         sender_ts = find_keys_in_range(list(sender_acc.keys()), min, max)
         sum = [0, 0, 0]
+        counter = 0
         for ts in sender_ts:
-            sum = sum_3d(sum, sender_acc[ts], (ts - min) / 1000)
-        sender_vel[max] = sum
+            sum = sum_3d(sum, sender_acc[ts], 1)
+            counter = counter + 1
+        if counter > 0:
+            sender_vel[max] = scale(sum, 1 / counter)
         attacker_ts = find_keys_in_range(list(attacker_acc.keys()), min, max)
         sum = [0, 0, 0]
+        counter = 0
         for ts in attacker_ts:
-            sum = sum_3d(sum, attacker_acc[ts], (ts - min) / 1000)
-        attacker_vel[max] = sum
+            sum = sum_3d(sum, attacker_acc[ts], 1)
+            counter = counter + 1
+        if counter > 0:
+            attacker_vel[max] = scale(sum, 1 / counter)
+    
 
-    verifier_vel = normalize_3d(verifier_vel)
+    verifier_acc = normalize_3d(verifier_acc)
     sender_vel = normalize_3d(sender_vel)
     attacker_vel = normalize_3d(attacker_vel)
 
+    # flip z-axis
+    verifier_acc = scale_axis(verifier_acc, -1, 2)
+    # swap axis of verifier
+    #verifier_acc = swap_axis_3d(verifier_acc, 1, 2)
+
     # visualize
-    plot(verifier_vel, sender_vel, attacker_vel)
+    #plot(verifier_acc, sender_vel, attacker_vel)
 
     # get similarity in each axis
     legit_sum = 0
@@ -178,12 +248,11 @@ def main(experiment_name, LOG=False):
     attacker_sim = {}
     for i in range(len(verifier_ts) - 1):
         ts = verifier_ts[i+1]
-        legit_sum = legit_sum + \
-            get_similarity_3d(verifier_vel[ts], sender_vel[ts])
-        legit_sim[ts] = legit_sum / (i+1)
-        attacker_sum = attacker_sum + get_similarity_3d(
-            verifier_vel[ts], attacker_vel[ts])
-        attacker_sim[ts] = attacker_sum / (i+1)
+        if ts in sender_vel and ts in attacker_vel:
+            legit_sim[ts] = get_similarity_3d(verifier_acc[ts], sender_vel[ts])
+            legit_sum = legit_sum + legit_sim[ts]
+            attacker_sim[ts] = get_similarity_3d(verifier_acc[ts], attacker_vel[ts])
+            attacker_sum = attacker_sum + attacker_sim[ts]
 
     print("Legitimate similarity: {}".format(
         round(legit_sum / len(verifier_ts) * 100, 2)))
@@ -191,12 +260,12 @@ def main(experiment_name, LOG=False):
         round(attacker_sum / len(verifier_ts) * 100, 2)))
 
     # visualize
-    # plot(verifier_vel, legit_sim, attacker_sim)
+    #plot(verifier_acc, legit_sim, attacker_sim)
 
 
 if __name__ == "__main__":
     # "exp3" - "exp6" involve attacker
-    for i in [3, 4, 5, 6]:
+    for i in [9]: #[3, 4, 5, 6]:
         experiment_name = "exp{}".format(i)
         print("Doing Experiment {}:".format(i))
         main(experiment_name)

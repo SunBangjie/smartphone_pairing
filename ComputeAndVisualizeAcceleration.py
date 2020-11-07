@@ -56,7 +56,7 @@ def visualize(experiment_name):
 
 
 if __name__ == "__main__":
-    experiment_names = ["exp1", "exp2", "exp3", "exp4", "exp5", "exp6", "exp7"]
+    experiment_names = ['exp9'] #["exp1", "exp2", "exp3", "exp4", "exp5", "exp6", "exp7"]
     for name in experiment_names:
         compute(name)
         visualize(name)

@@ -16,8 +16,8 @@ RESO_Y = int(640 / FACTOR)
 CONF_VAL = 0
 THRESHOLD = 0
 
-UPPER_BOUND = 200
-LOWER_BOUND = 50
+UPPER_BOUND = 230
+LOWER_BOUND = 150
 
 
 def get_file_index(filename):
@@ -160,7 +160,7 @@ def main(rgb_folder, depth_folder, model_folder, output_folder, save_images=Fals
             depth_pixels = depth_pixels.flatten()
             mask = (depth_pixels > LOWER_BOUND) & (depth_pixels < UPPER_BOUND)
             depth_pixels = depth_pixels[mask]
-            pixel_mean = stats.trim_mean(depth_pixels, 0.1, axis=None)
+            pixel_mean = np.mean(depth_pixels)
 
             # save timestamp and position
             if not math.isnan(pixel_mean):
@@ -182,7 +182,7 @@ def main(rgb_folder, depth_folder, model_folder, output_folder, save_images=Fals
 
 
 if __name__ == "__main__":
-    experiment_name = "exp7"
+    experiment_name = "exp9"
     rgb_folder = "Experiment_Frames/" + experiment_name + "/rgb_frames/"
     depth_folder = "Experiment_Frames/" + experiment_name + "/depth_frames/"
     model_folder = "yolo-coco/"
