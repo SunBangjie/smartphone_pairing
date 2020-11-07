@@ -159,23 +159,34 @@ def find_keys_in_range(keys, min, max):
     return result
 
 
-def get_similarity(a, b):
+def get_axis_similarity(a, b):
     same_sign = a * b > 0
     small_diff = abs(a - b) < Threshold.DIFF_THRESHOLD
     if same_sign and small_diff:
         return 1
     elif same_sign:
-        return 0.9
+        return 0.8
     elif small_diff:
         return 0.5
     return 0
 
 
+def get_distance(a, b):
+    sum = 0
+    for i in [0, 1, 2]:
+        sum = sum + a[i] ** 2 + b[i] ** 2
+    return sum ** 0.5
+
+
 def get_similarity_3d(a, b):
     similarity = 0
+    # get average axis similarity
     for i in [0, 1, 2]:
-        similarity = similarity + get_similarity(a[i], b[i])
-    return similarity / 3
+        similarity = similarity + get_axis_similarity(a[i], b[i])
+    similarity = similarity / 3
+    # get inverse of euclidean distance
+    similarity = similarity + 1 / (get_distance(a, b) + 1)
+    return similarity
 
 
 def main(experiment_name, LOG=False):
@@ -235,11 +246,12 @@ def main(experiment_name, LOG=False):
 
     # flip z-axis
     verifier_acc = scale_axis(verifier_acc, -1, 2)
+    verifier_acc = scale_axis(verifier_acc, -1, 0)
     # swap axis of verifier
-    #verifier_acc = swap_axis_3d(verifier_acc, 1, 2)
+    #verifier_acc = swap_axis_3d(verifier_acc, 0, 1)
 
     # visualize
-    #plot(verifier_acc, sender_vel, attacker_vel)
+    plot(verifier_acc, sender_vel, attacker_vel)
 
     # get similarity in each axis
     legit_sum = 0
@@ -260,7 +272,7 @@ def main(experiment_name, LOG=False):
         round(attacker_sum / len(verifier_ts) * 100, 2)))
 
     # visualize
-    #plot(verifier_acc, legit_sim, attacker_sim)
+    plot(verifier_acc, legit_sim, attacker_sim)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,6 @@ from os import listdir
 from os.path import isfile, join
 import numpy as np
 import time
-from scipy import stats
 import math
 
 DEBUG = True
@@ -182,14 +181,16 @@ def main(rgb_folder, depth_folder, model_folder, output_folder, save_images=Fals
 
 
 if __name__ == "__main__":
-    experiment_name = "exp9"
-    rgb_folder = "Experiment_Frames/" + experiment_name + "/rgb_frames/"
-    depth_folder = "Experiment_Frames/" + experiment_name + "/depth_frames/"
-    model_folder = "yolo-coco/"
-    output_folder = "Experiment_Output/" + experiment_name + "/"
-    start = time.time()
-    print("[INFO] start processing all frames...")
-    main(rgb_folder, depth_folder, model_folder,
-         output_folder, save_images=True)
-    elapse = time.time() - start
-    print("[INFO] completed in {}s".format(round(elapse, 1)))
+    for i in [10, 11, 12]:
+        experiment_name = "exp{}".format(i)
+        print("Doing experiment {}".format(i))
+        rgb_folder = "Experiment_Frames/" + experiment_name + "/rgb_frames/"
+        depth_folder = "Experiment_Frames/" + experiment_name + "/depth_frames/"
+        model_folder = "yolo-coco/"
+        output_folder = "Experiment_Output/" + experiment_name + "/"
+        start = time.time()
+        print("[INFO] start processing all frames...")
+        main(rgb_folder, depth_folder, model_folder,
+            output_folder, save_images=True)
+        elapse = time.time() - start
+        print("[INFO] completed in {}s".format(round(elapse, 1)))

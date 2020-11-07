@@ -3,7 +3,6 @@
 import h5py
 import sys
 import time
-from helpers import colorize
 import cv2
 import numpy as np
 
