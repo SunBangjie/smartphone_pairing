@@ -115,14 +115,13 @@ def detect(experiment_name):
             if pixel_count > 0:
                 pixel_mean = pixel_sum / pixel_count
                 # Store timestamp and position when depth is within range
-                if Threshold.DEPTH_MIN <= pixel_mean <= Threshold.DEPTH_MAX:
-                    timestamp = img_file.split('.')[0]
-                    out_file.write("{},{},{},{}\n".format(
-                        timestamp, centroid[0], centroid[1], round(
-                            pixel_mean, 4)
-                    ))
-                    print("point is ({}, {}, {})".format(
-                        centroid[0], centroid[1], round(pixel_mean, 4)))
+                timestamp = img_file.split('.')[0]
+                out_file.write("{},{},{},{}\n".format(
+                    timestamp, centroid[0], centroid[1], round(
+                        pixel_mean, 4)
+                ))
+                print("point is ({}, {}, {})".format(
+                    centroid[0], centroid[1], round(pixel_mean, 4)))
         except:
             box_img = np.copy(img)
             cv.imshow("Contour Image", box_img)
@@ -130,7 +129,7 @@ def detect(experiment_name):
         # Show depth image
         cv.imshow("Depth Image", depth)
 
-        key = cv.waitKey(33)
+        key = cv.waitKey(20)
         if key != -1:
             cv.destroyAllWindows()
             break

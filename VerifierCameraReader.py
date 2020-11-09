@@ -39,8 +39,8 @@ def extract_frames(experiment_name):
             cv2.imwrite(
                 "./Experiment_Frames/{}/rgb_frames/{}.jpg".format(experiment_name, timestamp), color[i])
 
-            # Simulate 30ish fps
-            key = cv2.waitKey(33)
+            # Simulate 50ish fps
+            key = cv2.waitKey(20)
             if key != -1:
                 cv2.destroyAllWindows()
                 break

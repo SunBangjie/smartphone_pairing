@@ -154,8 +154,9 @@ def read_acc(filename, first_ts, last_ts, is_sender=True):
     return result
 
 
-def plot_sender(verifier, sender):
+def plot_sender(verifier, sender, title):
     fig, (ax1, ax2) = plt.subplots(2)
+    plt.title(title)
     # Plot verifier
     lists = sorted(verifier.items())
     x, y = zip(*lists)
@@ -194,7 +195,7 @@ def get_axis_similarity(a, b):
 def get_distance(a, b):
     sum = 0
     for i in [0, 1, 2]:
-        sum = sum + a[i] ** 2 + b[i] ** 2
+        sum = sum + (a[i] - b[i]) ** 2
     return sum ** 0.5
 
 
@@ -227,15 +228,39 @@ def align_sampling_rates(verifier_acc, sender_acc):
     return sender_vel
 
 
-def compute_simularity(experiment_name, LOG=False, is_attacker=False):
+def correlate_3d(a, b):
+    aX = a[:, 0]
+    aY = a[:, 1]
+    aZ = a[:, 2]
+    bX = b[:, 0]
+    bY = b[:, 1]
+    bZ = b[:, 2]
+    simX = np.correlate(aX, bX)
+    simY = np.correlate(aY, bY)
+    simZ = np.correlate(aZ, bZ)
+    sim = simX + simY + simZ
+    simAbsMean = np.mean(np.abs(sim))
+
+    return simAbsMean
+
+
+def compute_simularity(experiment_name, LOG=False, is_attacker=False, PLOT=False):
     # get file paths
     folder = "Experiment_Output/{}/".format(experiment_name)
+    data_folder = "Experiment_Data/{}/".format(experiment_name)
     verifier_acc_path = folder + "accelerations.txt"
     if is_attacker:
-        sender_acc_path = folder + \
+        sender_acc_path = data_folder + \
             "{}_attack_acc_reading.txt".format(experiment_name)
     else:
-        sender_acc_path = folder + "{}_acc_reading.txt".format(experiment_name)
+        sender_acc_path = data_folder + \
+            "{}_acc_reading.txt".format(experiment_name)
+
+    # get identity
+    if is_attacker:
+        identity = "Attacker"
+    else:
+        identity = "Legitimate"
 
     # load data
     first_ts, last_ts = get_first_and_last_ts(verifier_acc_path)
@@ -246,10 +271,13 @@ def compute_simularity(experiment_name, LOG=False, is_attacker=False):
     # log number of samples
     if LOG:
         print("Verifier (Kinect) has {} samples".format(len(verifier_acc.keys())))
-        print("Sender (Smartphone) has {} samples".format(len(sender_acc.keys())))
+        print("{} (Smartphone) has {} samples".format(
+            identity, len(sender_acc.keys())))
 
     # visualize
-    plot_sender(verifier_acc, sender_acc)
+    if PLOT:
+        plot_sender(verifier_acc, sender_acc,
+                    "Raw Acceleration with {}".format(identity))
 
     # align sampling rate
     sender_vel = align_sampling_rates(verifier_acc, sender_acc)
@@ -267,19 +295,12 @@ def compute_simularity(experiment_name, LOG=False, is_attacker=False):
     verifier_acc = scale_axis(verifier_acc, -1, 0)
 
     # visualize
-    plot_sender(verifier_acc, sender_vel)
+    if PLOT:
+        plot_sender(verifier_acc, sender_vel,
+                    "Processed Acceleration with {}".format(identity))
 
-    # get similarity in each axis
-    verifier_ts = list(verifier_acc.keys())
-    legit_sum = 0
-    legit_sim = {}
-    for i in range(len(verifier_ts) - 1):
-        ts = verifier_ts[i+1]
-        if ts in sender_vel:
-            legit_sim[ts] = get_similarity_3d(verifier_acc[ts], sender_vel[ts])
-            legit_sum = legit_sum + legit_sim[ts]
+    similarity = correlate_3d(
+        np.array(list(verifier_acc.values())), np.array(list(sender_vel.values())))
 
-    print("Similarity: {}".format(
-        round(legit_sum / len(verifier_ts) * 100, 2)))
-
-    plot_sender(verifier_acc, legit_sim)
+    # print result
+    print("{} similarity: {}".format(identity, round(similarity, 4)))

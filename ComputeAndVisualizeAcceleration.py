@@ -15,23 +15,30 @@ def compute(experiment_name):
     out = open(output_folder + "accelerations.txt", "w")
     prev_time = None
     prev_pos = None
+    last_valid = 200
     for line in f.readlines():
+        # Split line to components
         split_line = line.split(',')
+        T = int(split_line[0])
+        X = float(split_line[1])
+        Y = float(split_line[2])
+        Z = float(split_line[3])
+        # fine tuning Z
+        if Threshold.DEPTH_MIN < Z < Threshold.DEPTH_MAX:
+            last_valid = Z
+        else:
+            Z = last_valid
         if prev_time is None or prev_pos is None:
-            prev_time = int(split_line[0])
-            prev_pos = np.array([float(split_line[1]), float(
-                split_line[2]), float(split_line[3])])
+            prev_time = T
+            prev_pos = np.array([X, Y, Z])
             continue
         else:
-            time = int(split_line[0])
-            pos = np.array([float(split_line[1]), float(
-                split_line[2]), float(split_line[3])])
+            time = T
+            pos = np.array([X, Y, Z])
         # compute acc
-        # filter out low frequencies
-        if (time - prev_time) < Threshold.MAX_TIME_DIFF:
-            acceleration = (pos - prev_pos) / ((time - prev_time) ** 2)
-            out.write("{},{},{},{}\n".format(
-                time, acceleration[0], acceleration[1], acceleration[2]))
+        acceleration = (pos - prev_pos) / ((time - prev_time) ** 2)
+        out.write("{},{},{},{}\n".format(
+            time, acceleration[0], acceleration[1], acceleration[2]))
 
         # step
         prev_time = time
@@ -78,7 +85,7 @@ def visualize_verifier(experiment_name, show_X=True, show_Y=True, show_Z=True):
 
 
 def visualize_sender(experiment_name, show_X=True, show_Y=True, show_Z=True):
-    output_folder = "Experiment_Output/" + experiment_name + "/"
+    output_folder = "Experiment_Data/" + experiment_name + "/"
     f = open(output_folder + "{}_acc_reading.txt".format(experiment_name), "r")
 
     T, X, Y, Z = [], [], [], []
