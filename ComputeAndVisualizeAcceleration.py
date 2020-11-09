@@ -48,7 +48,7 @@ def compute(experiment_name):
     out.close()
 
 
-def visualize_verifier(experiment_name, show_X=True, show_Y=True, show_Z=True):
+def visualize_verifier(experiment_name, show_X=True, show_Y=True, show_Z=True, PLOT=True):
     output_folder = "Experiment_Output/" + experiment_name + "/"
     f = open(output_folder + "accelerations.txt", "r")
 
@@ -81,10 +81,11 @@ def visualize_verifier(experiment_name, show_X=True, show_Y=True, show_Z=True):
     plt.ylabel('Acceleration')
     plt.title("Acceleration graph from RGBD camera")
     plt.legend()
-    plt.show()
+    if PLOT:
+        plt.show()
 
 
-def visualize_sender(experiment_name, show_X=True, show_Y=True, show_Z=True):
+def visualize_sender(experiment_name, show_X=True, show_Y=True, show_Z=True, PLOT=True):
     output_folder = "Experiment_Data/" + experiment_name + "/"
     f = open(output_folder + "{}_acc_reading.txt".format(experiment_name), "r")
 
@@ -118,4 +119,5 @@ def visualize_sender(experiment_name, show_X=True, show_Y=True, show_Z=True):
     plt.ylabel('Acceleration')
     plt.title("Acceleration graph from accelerometer")
     plt.legend()
-    plt.show()
+    if PLOT:
+        plt.show()

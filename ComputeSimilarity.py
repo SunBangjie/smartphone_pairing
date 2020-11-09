@@ -228,20 +228,28 @@ def align_sampling_rates(verifier_acc, sender_acc):
     return sender_vel
 
 
-def correlate_3d(a, b):
-    aX = a[:, 0]
-    aY = a[:, 1]
-    aZ = a[:, 2]
-    bX = b[:, 0]
-    bY = b[:, 1]
-    bZ = b[:, 2]
-    simX = np.correlate(aX, bX)
-    simY = np.correlate(aY, bY)
-    simZ = np.correlate(aZ, bZ)
-    sim = simX + simY + simZ
-    simAbsMean = np.mean(np.abs(sim))
+def correlate_3d(a, b, mode):
+    aX, aY, aZ = a[:, 0], a[:, 1], a[:, 2]
+    bX, bY, bZ = b[:, 0], b[:, 1], b[:, 2]
+    simX, simY, simZ = np.correlate(aX, bX, mode), np.correlate(
+        aY, bY, mode), np.correlate(aZ, bZ, mode)
+    simMean = np.mean(simX) + np.mean(simY) + np.mean(simZ)
+    simMean = simMean / 3 * 50
+    simMean = min(50, max(simMean, -50)) + 50
+    return simMean
 
-    return simAbsMean
+
+def trim_samples(d):
+    size = len(list(d.keys()))
+    head = int(size * Threshold.HEAD)
+    tail = int(size * Threshold.TAIL)
+    counter = 0
+    result = {}
+    for key in d.keys():
+        counter = counter + 1
+        if head <= counter <= tail and counter <= Threshold.NUM_SAMPLES:
+            result[key] = d[key]
+    return result
 
 
 def compute_simularity(experiment_name, LOG=False, is_attacker=False, PLOT=False):
@@ -274,6 +282,9 @@ def compute_simularity(experiment_name, LOG=False, is_attacker=False, PLOT=False
         print("{} (Smartphone) has {} samples".format(
             identity, len(sender_acc.keys())))
 
+    # trim samples
+    verifier_acc = trim_samples(verifier_acc)
+
     # visualize
     if PLOT:
         plot_sender(verifier_acc, sender_acc,
@@ -300,7 +311,8 @@ def compute_simularity(experiment_name, LOG=False, is_attacker=False, PLOT=False
                     "Processed Acceleration with {}".format(identity))
 
     similarity = correlate_3d(
-        np.array(list(verifier_acc.values())), np.array(list(sender_vel.values())))
+        np.array(list(verifier_acc.values())),
+        np.array(list(sender_vel.values())),
+        'same')
 
-    # print result
-    print("{} similarity: {}".format(identity, round(similarity, 4)))
+    return round(similarity, 4)
