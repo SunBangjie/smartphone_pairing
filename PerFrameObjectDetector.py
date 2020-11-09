@@ -1,7 +1,7 @@
 import cv2
 import os
-from os import listdir
-from os.path import isfile, join
+from os import listdir, makedirs
+from os.path import isfile, join, exists
 import numpy as np
 import time
 import math
@@ -100,7 +100,24 @@ def process_frame(frame, net, ln, LABELS):
     return boxes, confidences
 
 
-def main(rgb_folder, depth_folder, model_folder, output_folder, save_images=False):
+def detect_object(experiment_name, save_images=False):
+    rgb_folder = "Experiment_Frames/" + experiment_name + "/rgb_frames/"
+    depth_folder = "Experiment_Frames/" + experiment_name + "/depth_frames/"
+    model_folder = "yolo-coco/"
+    output_folder = "Experiment_Output/" + experiment_name + "/"
+
+    # make the folders if not exist
+    if not exists(rgb_folder):
+        makedirs(rgb_folder)
+    if not exists(depth_folder):
+        makedirs(depth_folder)
+    if not exists(output_folder):
+        makedirs(output_folder)
+    if not exists(output_folder + 'depth/'):
+        makedirs(output_folder + 'depth/')
+    if not exists(output_folder + 'rgb/'):
+        makedirs(output_folder + 'rgb/')
+
     # load rgb images
     print("[INFO] loading rgb images from disk...")
     img_files = [f for f in listdir(rgb_folder) if isfile(join(rgb_folder, f))]
@@ -178,19 +195,3 @@ def main(rgb_folder, depth_folder, model_folder, output_folder, save_images=Fals
             break
 
     out_file.close()
-
-
-if __name__ == "__main__":
-    for i in [10, 11, 12]:
-        experiment_name = "exp{}".format(i)
-        print("Doing experiment {}".format(i))
-        rgb_folder = "Experiment_Frames/" + experiment_name + "/rgb_frames/"
-        depth_folder = "Experiment_Frames/" + experiment_name + "/depth_frames/"
-        model_folder = "yolo-coco/"
-        output_folder = "Experiment_Output/" + experiment_name + "/"
-        start = time.time()
-        print("[INFO] start processing all frames...")
-        main(rgb_folder, depth_folder, model_folder,
-            output_folder, save_images=True)
-        elapse = time.time() - start
-        print("[INFO] completed in {}s".format(round(elapse, 1)))

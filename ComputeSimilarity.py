@@ -3,6 +3,32 @@ import numpy as np
 import Threshold
 
 
+def moving_average(a, n=3):
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
+
+
+def moving_average_3d(d):
+    T = list(d.keys())
+    X = []
+    Y = []
+    Z = []
+    for key in T:
+        acc = d[key]
+        X.append(acc[0])
+        Y.append(acc[1])
+        Z.append(acc[2])
+    N = Threshold.MOVING_AVERAGE_N
+    X = moving_average(np.array(X), n=N)
+    Y = moving_average(np.array(Y), n=N)
+    Z = moving_average(np.array(Z), n=N)
+    result = {}
+    for i in range(len(X)):
+        result[i] = [X[i], Y[i], Z[i]]
+    return result
+
+
 def sum_3d(a, b, m):
     c = [0, 0, 0]
     c[0] = a[0] + b[0] * m
@@ -12,7 +38,7 @@ def sum_3d(a, b, m):
 
 
 def scale(a, m):
-    for i in [0,1,2]:
+    for i in [0, 1, 2]:
         a[i] = a[i] * m
     return a
 
@@ -84,7 +110,7 @@ def swap_axis_3d(d, a1, a2):
 
 
 def cap(a, m):
-    for i in [0,1,2]:
+    for i in [0, 1, 2]:
         if a[i] > m:
             a[i] = m
         elif a[i] < -m:
@@ -128,8 +154,8 @@ def read_acc(filename, first_ts, last_ts, is_sender=True):
     return result
 
 
-def plot(verifier, sender, attacker):
-    fig, (ax1, ax2, ax3) = plt.subplots(3)
+def plot_sender(verifier, sender):
+    fig, (ax1, ax2) = plt.subplots(2)
     # Plot verifier
     lists = sorted(verifier.items())
     x, y = zip(*lists)
@@ -139,13 +165,7 @@ def plot(verifier, sender, attacker):
     lists = sorted(sender.items())
     x, y = zip(*lists)
     ax2.plot(x, y)
-    ax2.set_title("legitimate")
-    # Plot attacker
-    lists = sorted(attacker.items())
-    x, y = zip(*lists)
-    ax3.plot(x, y)
-    ax3.set_title("attacker")
-
+    ax2.set_title("sender")
     # Show plots
     plt.tight_layout()
     plt.show()
@@ -189,36 +209,10 @@ def get_similarity_3d(a, b):
     return similarity
 
 
-def main(experiment_name, LOG=False):
-    # get file paths
-    folder = "Experiment_Output/{}/".format(experiment_name)
-    sender_acc_path = folder + "{}_acc_reading.txt".format(experiment_name)
-    attacker_acc_path = folder + \
-        "{}_attack_acc_reading.txt".format(experiment_name)
-    verifier_acc_path = folder + "accelerations.txt"
-
-    # load data
-    first_ts, last_ts = get_first_and_last_ts(verifier_acc_path)
-    verifier_acc = read_acc(verifier_acc_path, first_ts,
-                            last_ts, is_sender=False)
-    sender_acc = read_acc(sender_acc_path, first_ts, last_ts, is_sender=True)
-    attacker_acc = read_acc(attacker_acc_path, first_ts,
-                            last_ts, is_sender=True)
-
-    # log number of samples
-    if LOG:
-        print("Verifier (Kinect) has {} samples".format(len(verifier_acc.keys())))
-        print("Sender (Smartphone) has {} samples".format(len(sender_acc.keys())))
-        print("Attacker (Malicious phone) has {} samples".format(
-            len(attacker_acc.keys())))
-
-    # visualize
-    #plot(verifier_acc, sender_acc, attacker_acc)
-
-    # since we always have more samples in sender/attacker, we want to sum the accelerations within the time interval to get the next velocity
+def align_sampling_rates(verifier_acc, sender_acc):
+    # since we always have more samples in sender/attacker, we want to average the accelerations within the time interval
     verifier_ts = list(verifier_acc.keys())
     sender_vel = {}
-    attacker_vel = {}
     for i in range(len(verifier_ts) - 1):
         min = verifier_ts[i]
         max = verifier_ts[i+1]
@@ -230,55 +224,62 @@ def main(experiment_name, LOG=False):
             counter = counter + 1
         if counter > 0:
             sender_vel[max] = scale(sum, 1 / counter)
-        attacker_ts = find_keys_in_range(list(attacker_acc.keys()), min, max)
-        sum = [0, 0, 0]
-        counter = 0
-        for ts in attacker_ts:
-            sum = sum_3d(sum, attacker_acc[ts], 1)
-            counter = counter + 1
-        if counter > 0:
-            attacker_vel[max] = scale(sum, 1 / counter)
-    
+    return sender_vel
 
+
+def compute_simularity(experiment_name, LOG=False, is_attacker=False):
+    # get file paths
+    folder = "Experiment_Output/{}/".format(experiment_name)
+    verifier_acc_path = folder + "accelerations.txt"
+    if is_attacker:
+        sender_acc_path = folder + \
+            "{}_attack_acc_reading.txt".format(experiment_name)
+    else:
+        sender_acc_path = folder + "{}_acc_reading.txt".format(experiment_name)
+
+    # load data
+    first_ts, last_ts = get_first_and_last_ts(verifier_acc_path)
+    verifier_acc = read_acc(verifier_acc_path, first_ts,
+                            last_ts, is_sender=False)
+    sender_acc = read_acc(sender_acc_path, first_ts, last_ts, is_sender=True)
+
+    # log number of samples
+    if LOG:
+        print("Verifier (Kinect) has {} samples".format(len(verifier_acc.keys())))
+        print("Sender (Smartphone) has {} samples".format(len(sender_acc.keys())))
+
+    # visualize
+    plot_sender(verifier_acc, sender_acc)
+
+    # align sampling rate
+    sender_vel = align_sampling_rates(verifier_acc, sender_acc)
+
+    # take moving average
+    verifier_acc = moving_average_3d(verifier_acc)
+    sender_vel = moving_average_3d(sender_vel)
+
+    # normalize
     verifier_acc = normalize_3d(verifier_acc)
     sender_vel = normalize_3d(sender_vel)
-    attacker_vel = normalize_3d(attacker_vel)
 
-    # flip z-axis
+    # flip x and z-axis
     verifier_acc = scale_axis(verifier_acc, -1, 2)
     verifier_acc = scale_axis(verifier_acc, -1, 0)
-    # swap axis of verifier
-    #verifier_acc = swap_axis_3d(verifier_acc, 0, 1)
 
     # visualize
-    plot(verifier_acc, sender_vel, attacker_vel)
+    plot_sender(verifier_acc, sender_vel)
 
     # get similarity in each axis
+    verifier_ts = list(verifier_acc.keys())
     legit_sum = 0
-    attacker_sum = 0
     legit_sim = {}
-    attacker_sim = {}
     for i in range(len(verifier_ts) - 1):
         ts = verifier_ts[i+1]
-        if ts in sender_vel and ts in attacker_vel:
+        if ts in sender_vel:
             legit_sim[ts] = get_similarity_3d(verifier_acc[ts], sender_vel[ts])
             legit_sum = legit_sum + legit_sim[ts]
-            attacker_sim[ts] = get_similarity_3d(verifier_acc[ts], attacker_vel[ts])
-            attacker_sum = attacker_sum + attacker_sim[ts]
 
-    print("Legitimate similarity: {}".format(
+    print("Similarity: {}".format(
         round(legit_sum / len(verifier_ts) * 100, 2)))
-    print("Attacker similarity: {}".format(
-        round(attacker_sum / len(verifier_ts) * 100, 2)))
 
-    # visualize
-    plot(verifier_acc, legit_sim, attacker_sim)
-
-
-if __name__ == "__main__":
-    # "exp3" - "exp6" involve attacker
-    for i in [9]: #[3, 4, 5, 6]:
-        experiment_name = "exp{}".format(i)
-        print("Doing Experiment {}:".format(i))
-        main(experiment_name)
-        print("")
+    plot_sender(verifier_acc, legit_sim)
