@@ -121,8 +121,8 @@ def detect(experiment_name):
                         timestamp, centroid[0], centroid[1], round(
                             pixel_mean, 4)
                     ))
-                print("point is ({}, {}, {})".format(
-                    centroid[0], centroid[1], round(pixel_mean, 4)))
+                    print("point is ({}, {}, {})".format(
+                        centroid[0], centroid[1], round(pixel_mean, 4)))
         except:
             box_img = np.copy(img)
             cv.imshow("Contour Image", box_img)

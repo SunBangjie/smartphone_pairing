@@ -5,7 +5,7 @@ if __name__ == '__main__':
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     # Connect the socket to the port where the server is listening
-    server_address = ('192.168.43.118', 8888)
+    server_address = ('192.168.0.147', 8888)
     print('starting up on %s port %s' % server_address)
     sock.bind(server_address)
     sock.listen(1)
