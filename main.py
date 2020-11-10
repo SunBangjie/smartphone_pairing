@@ -40,17 +40,6 @@ def plot_round_result(result):
     plt.show()
 
 
-def extract_data(experiment_name):
-    # extract frames
-    VerifierCameraReader.extract_frames(experiment_name)
-
-    # extract RGBD data from frames
-    PhoneDetector.detect(experiment_name)
-
-    # visualize positions
-    # VisualizePositions.visualize_position(experiment_name)
-
-
 def do_experiment_with_legitimate(experiment_name, normalize=True):
     # compute and visualize acceleration
     ComputeAndVisualizeAcceleration.compute(experiment_name)
@@ -213,12 +202,6 @@ def experiment_type_3(normalize=True):
 
 
 if __name__ == "__main__":
-
-    # extract data first, if needed
-    #exp_list = range(34, 44)
-    # for i in exp_list:
-    #    experiment_name = "exp{}".format(i)
-    #    extract_data(experiment_name)
 
     experiment_type_1(normalize=False)
     experiment_type_1(normalize=True)

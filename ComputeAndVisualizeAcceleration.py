@@ -15,7 +15,7 @@ def compute(experiment_name):
     out = open(output_folder + "accelerations.txt", "w")
     prev_time = None
     prev_pos = None
-    last_valid = 200
+    last_Z = 0
     for line in f.readlines():
         # Split line to components
         split_line = line.split(',')
@@ -23,11 +23,6 @@ def compute(experiment_name):
         X = float(split_line[1])
         Y = float(split_line[2])
         Z = float(split_line[3])
-        # fine tuning Z
-        if Threshold.DEPTH_MIN < Z < Threshold.DEPTH_MAX:
-            last_valid = Z
-        else:
-            Z = last_valid
         if prev_time is None or prev_pos is None:
             prev_time = T
             prev_pos = np.array([X, Y, Z])
@@ -37,6 +32,11 @@ def compute(experiment_name):
             pos = np.array([X, Y, Z])
         # compute acc
         acceleration = (pos - prev_pos) / ((time - prev_time) ** 2)
+        # fine tuning Z component of acc
+        if Threshold.DEPTH_MIN < Z < Threshold.DEPTH_MAX:
+            last_Z = acceleration[2]
+        else:
+            acceleration[2] = last_Z
         out.write("{},{},{},{}\n".format(
             time, acceleration[0], acceleration[1], acceleration[2]))
 
