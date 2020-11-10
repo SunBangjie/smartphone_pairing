@@ -172,6 +172,20 @@ def plot_sender(verifier, sender, title):
     plt.show()
 
 
+def plot_correlation(X, Y, Z, title):
+    fig, (ax1, ax2, ax3) = plt.subplots(3)
+    T = range(len(X))
+    ax1.plot(T, X)
+    ax1.set_title("X axis")
+    ax2.plot(T, Y)
+    ax2.set_title("Y axis")
+    ax3.plot(T, Z)
+    ax3.set_title("Z axis")
+    plt.tight_layout()
+    plt.title(title)
+    plt.show()
+
+
 def find_keys_in_range(keys, min, max):
     result = []
     for key in keys:
@@ -233,10 +247,7 @@ def correlate_3d(a, b, mode):
     bX, bY, bZ = b[:, 0], b[:, 1], b[:, 2]
     simX, simY, simZ = np.correlate(aX, bX, mode), np.correlate(
         aY, bY, mode), np.correlate(aZ, bZ, mode)
-    simMean = np.mean(simX) + np.mean(simY) + np.mean(simZ)
-    simMean = simMean / 3 * 50
-    simMean = min(50, max(simMean, -50)) + 50
-    return simMean
+    return simX, simY, simZ
 
 
 def trim_samples(d):
@@ -252,7 +263,7 @@ def trim_samples(d):
     return result
 
 
-def compute_simularity(experiment_name, LOG=False, is_attacker=False, PLOT=False):
+def compute_simularity(experiment_name, LOG=False, is_attacker=False, PLOT=False, normalize_samples=True):
     # get file paths
     folder = "Experiment_Output/{}/".format(experiment_name)
     data_folder = "Experiment_Data/{}/".format(experiment_name)
@@ -310,9 +321,25 @@ def compute_simularity(experiment_name, LOG=False, is_attacker=False, PLOT=False
         plot_sender(verifier_acc, sender_vel,
                     "Processed Acceleration with {}".format(identity))
 
-    similarity = correlate_3d(
+    simX, simY, simZ = correlate_3d(
         np.array(list(verifier_acc.values())),
         np.array(list(sender_vel.values())),
         'same')
 
-    return round(similarity, 4)
+    # take absolute
+    simX, simY, simZ = np.abs(simX), np.abs(simY), np.abs(simZ)
+
+    # visualize
+    if PLOT:
+        plot_correlation(
+            simX, simY, simZ, "Absolute of cross correlation coefficients in 3 axes with {}".format(identity))
+
+    # Compute overall similarity
+    simMean = np.mean(simX) + np.mean(simY) + np.mean(simZ)
+    simMean = simMean / 3
+
+    if normalize_samples:
+        # Normalize similarity with number of samples as well
+        simMean = simMean / len(verifier_acc.keys()) * 100
+
+    return round(simMean, 4)
