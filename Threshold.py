@@ -20,3 +20,8 @@ MOVING_AVERAGE_N = 10
 
 # Similarity computation
 DIFF_THRESHOLD = 0.3
+
+# Axis correlation weightage
+X_WEIGHT = 1.1
+Y_WEIGHT = 1.1
+Z_WEIGHT = 0.8

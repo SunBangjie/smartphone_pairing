@@ -335,7 +335,9 @@ def compute_simularity(experiment_name, LOG=False, is_attacker=False, PLOT=False
             simX, simY, simZ, "Absolute of cross correlation coefficients in 3 axes with {}".format(identity))
 
     # Compute overall similarity
-    simMean = np.mean(simX) + np.mean(simY) + np.mean(simZ)
+    simMean = Threshold.X_WEIGHT * \
+        np.mean(simX) + Threshold.Y_WEIGHT * np.mean(simY) + \
+        Threshold.Z_WEIGHT * np.mean(simZ)
     simMean = simMean / 3
 
     if normalize_samples:
